@@ -99,7 +99,7 @@ In the output, `left` will refer to some value extracted from
   defmacro __using__(_) do
     quote do
       import FlowAssertions.Ecto.ChangesetA
-      import FlowAssertions.Ecto.MiscA
+      import FlowAssertions.Ecto.SchemaA
     end
   end
 end
