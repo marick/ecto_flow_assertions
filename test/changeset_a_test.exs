@@ -2,6 +2,7 @@ defmodule FlowAssertions.Ecto.ChangesetATest do
   use FlowAssertions.Ecto.Case
   use Ecto.Schema
   import Ecto.Changeset
+  alias FlowAssertions.Messages, as: BaseMessages
 
   embedded_schema do
     field :name, :string
@@ -38,45 +39,35 @@ defmodule FlowAssertions.Ecto.ChangesetATest do
       end)
   end
 
-  # describe "changes" do
-  #   test "successful checking for change existence", %{valid: valid} do
-  #     changeset(valid, %{name: "new", tags: []})
-  #     |> assert_changes(name: "new", tags: [])
-  #     # don't have to give a value
-  #     |> assert_changes([:name, :tags])
-  #     # fields don't have to be mentioned
-  #     |> assert_changes(name: "new")
-  #     |> assert_changes([:name])
-  #     # assert_change variant
-  #     |> assert_change(:name)
-  #   end
+  describe "changes" do
+    test "successful checking for change existence", %{valid: valid} do
+      changeset(valid, %{name: "new", tags: []})
+      |> assert_changes(name: "new", tags: [])
+      # don't have to give a value
+      |> assert_changes([:name, :tags])
+      # fields don't have to be mentioned
+      |> assert_changes(name: "new")
+      |> assert_changes([:name])
+      # assert_change variant
+      |> assert_change(:name)
+    end
 
-  #   @tag :skip
-  #   test "failure cases", %{valid: valid} do 
-  #     assertion_fails_with_diagnostic(
-  #       "Field `:name` is missing",
-  #       fn -> 
-  #         changeset(valid, %{name: valid.name})
-  #         |> assert_changes(name: valid.name)
-  #       end)
+    test "failure cases", %{valid: valid} do
+      assertion_fails(BaseMessages.field_missing(:name),
+        [left: %{}],
+        fn -> 
+          changeset(valid, %{name: valid.name})
+          |> assert_changes(name: valid.name)
+        end)
       
-  #     assertion_fails_with_diagnostic(
-  #       ["`:name` has the wrong value",
-  #        "wrong new name",
-  #        "right new name"],
-  #       fn -> 
-  #         changeset(valid, %{name: "wrong new name"})
-  #         |> assert_changes(name: "right new name")
-  #       end)
-
-  #     assertion_fails_with_diagnostic(
-  #       ["Field `:name` is missing"],
-  #       fn -> 
-  #         changeset(valid, %{name: valid.name})
-  #         |> assert_change(:name)
-  #       end)
-  #   end
-  # end
+      assertion_fails(BaseMessages.wrong_field_value(:name),
+        [left: "wrong new name", right: "right new name"],
+        fn -> 
+          changeset(valid, %{name: "wrong new name"})
+          |> assert_changes(name: "right new name")
+        end)
+    end
+  end
 
   # describe "lack of changes" do
   #   test "assert no changes anywhere", %{valid: valid} do

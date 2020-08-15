@@ -20,42 +20,43 @@ defmodule FlowAssertions.Ecto.ChangesetA do
       left: changeset)
   end
 
-  # @doc """
-  # A pipeline-ready version of `refute changeset.valid?`
-  # """
+  @doc """
+  A pipeline-ready version of `refute changeset.valid?`
+  """
   defchain assert_invalid(%Changeset{} = changeset) do
     elaborate_assert(not changeset.valid?, Messages.changeset_valid,
       expr: AssertionError.no_value,
       left: changeset)
   end
 
-  # # ------------------------------------------------------------------------
-  # @doc """
-  # The elements of `list` must be present in the `Changeset`'s changes.
-  # The simple case just checks whether fields have been changed:
+  # ------------------------------------------------------------------------
+  @doc ~S"""
+  Applies `FlowAssertions.MapA.assert_fields/2` to the changes in the changeset.
 
-  #     assert_changes(changeset, [:name, :tags])
+  To check that fields have been changed:
 
-  # Alternately, you can check that the listed keys have particular values:
+      changeset |> assert_changes([:name, :tags])
 
-  #     assert_changes(changeset, name: "Bossie", tags: [])
+  To check specific changed values:
 
-  # """
-  # defchain assert_changes(%Changeset{} = changeset, list),
-  #   do: assert_fields(changeset.changes, list)
+      changeset |> assert_changes(name: "Bossie", tags: [])
 
-  # @doc """
-  # `assert_change` can be used when only a single field is to have
-  # been changed. Its second argument is usually an atom, but can also
-  # be a list that's given directly to `assert_changes`. 
+  """
+  defchain assert_changes(%Changeset{} = changeset, keyword_list),
+    do: assert_fields(changeset.changes, keyword_list)
 
-  #     assert_changes(changeset, :name)
-  #     assert_changes(changeset, name: "Bossie")
-  # """
-  # def assert_change(cs, arg2) when not is_list(arg2),
-  #   do: assert_changes(cs, [arg2])
-  # def assert_change(cs, arg2),
-  #   do: assert_changes(cs, arg2)
+  @doc """
+  Like `assert_changes/2` for cases where you care only about a single field.
+
+  This is just a convenience function for the grammatically obsessive.
+
+      changeset |> assert_change(:name)
+      changeset |> assert_change(name: "Bossie")
+  """
+  def assert_change(cs, field_description) when not is_list(field_description),
+    do: assert_changes(cs, [field_description])
+  def assert_change(cs, field_description),
+    do: assert_changes(cs, field_description)
 
   # @doc """
   # The changeset must contain no changes.
