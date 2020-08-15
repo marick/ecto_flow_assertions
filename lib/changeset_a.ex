@@ -1,15 +1,33 @@
 defmodule FlowAssertions.Ecto.ChangesetA do
- use FlowAssertions.Define
- use FlowAssertions
- alias Ecto.Changeset
+  use FlowAssertions.Define
+  alias FlowAssertions.Ecto.Messages
+  use FlowAssertions
+  alias Ecto.Changeset
+  
 
+  @moduledoc """
+  Assertions for `Ecto.Changeset` structures.
+  """ 
+  
   # ------------------------------------------------------------------------
 
-  # defchain assert_valid(%Changeset{} = changeset),
-  #   do: assert changeset.valid?
+  @doc """
+  A pipeline-ready version of `assert changeset.valid?`
+  """
+  defchain assert_valid(%Changeset{} = changeset) do 
+    elaborate_assert(changeset.valid?, Messages.changeset_invalid,
+      expr: AssertionError.no_value,
+      left: changeset)
+  end
 
-  # defchain assert_invalid(%Changeset{} = changeset),
-  #   do: refute changeset.valid?
+  # @doc """
+  # A pipeline-ready version of `refute changeset.valid?`
+  # """
+  defchain assert_invalid(%Changeset{} = changeset) do
+    elaborate_assert(not changeset.valid?, Messages.changeset_valid,
+      expr: AssertionError.no_value,
+      left: changeset)
+  end
 
   # # ------------------------------------------------------------------------
   # @doc """

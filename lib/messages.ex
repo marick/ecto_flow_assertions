@@ -11,4 +11,7 @@ defmodule FlowAssertions.Ecto.Messages do
     do: "The value doesn't have a metadata field. Is it an embedded_schema?"
 
   def never_a_schema, do: "The value looks nothing like an Ecto schema"
+
+  def changeset_invalid, do: "The changeset is invalid"
+  def changeset_valid, do: "The changeset is supposed to be invalid"
 end

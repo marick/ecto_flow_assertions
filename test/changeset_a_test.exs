@@ -1,29 +1,42 @@
 defmodule FlowAssertions.Ecto.ChangesetATest do
   use FlowAssertions.Ecto.Case
   use Ecto.Schema
+  import Ecto.Changeset
 
-  # embedded_schema do
-  #   field :name, :string
-  #   field :tags, {:array, :string}
-  # end
+  embedded_schema do
+    field :name, :string
+    field :tags, {:array, :string}
+  end
 
-  # def changeset(thing, attrs) do
-  #   thing
-  #   |> cast(attrs, [:name, :tags])
-  #   |> validate_required([:name])
-  # end
+  def changeset(thing, attrs) do
+    thing
+    |> cast(attrs, [:name, :tags])
+    |> validate_required([:name])
+  end
 
-  # setup do
-  #   [valid: %__MODULE__{name: "Bossie", tags: ["cow"]}]
-  # end
+  setup do
+    [valid: %__MODULE__{name: "Bossie", tags: ["cow"]}]
+  end
 
-  # test "pure booleans" do
-  #   changeset(%__MODULE__{}, %{})
-  #   |> assert_invalid
+  test "pure booleans" do
+    invalid = %__MODULE__{} |> changeset(%{})
+    valid = %__MODULE__{} |> changeset(%{name: "Bossie"})
+    
+    assert assert_invalid(invalid) == invalid
+    assert assert_valid(valid) == valid
 
-  #   changeset(%__MODULE__{}, %{name: "Bossie"})
-  #   |> assert_valid
-  # end
+    assertion_fails(Messages.changeset_invalid,
+      [left: invalid],
+      fn ->
+        assert_valid(invalid)
+      end)
+
+    assertion_fails(Messages.changeset_valid,
+      [left: valid],
+      fn ->
+        assert_invalid(valid)
+      end)
+  end
 
   # describe "changes" do
   #   test "successful checking for change existence", %{valid: valid} do
