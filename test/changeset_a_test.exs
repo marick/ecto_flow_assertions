@@ -69,19 +69,19 @@ defmodule FlowAssertions.Ecto.ChangesetATest do
     end
   end
 
-  # describe "lack of changes" do
-  #   test "assert no changes anywhere", %{valid: valid} do
-  #     changeset(valid, %{tags: "wrong"})
-  #     |> assert_invalid
-  #     |> assert_no_changes
+  describe "lack of changes" do
+    test "assert no changes anywhere", %{valid: valid} do
+      changeset(valid, %{tags: "wrong"})
+      |> assert_invalid
+      |> assert_no_changes
 
-  #     assertion_fails_with_diagnostic(
-  #       "Fields have changed: `[:tags]`",
-  #       fn -> 
-  #         changeset(valid, %{tags: ["tag"]})
-  #         |> assert_no_changes
-  #       end)
-  #   end
+      changeset = changeset(valid, %{tags: ["tag"]})
+      assertion_fails(Messages.some_field_changes(changeset),
+        [left: changeset],
+        fn -> 
+          assert_no_changes(changeset)
+        end)
+    end
 
   #   test "assert particular values are unchanged", %{valid: valid} do
   #     changeset(valid, %{name: "new name"})
@@ -95,7 +95,7 @@ defmodule FlowAssertions.Ecto.ChangesetATest do
   #         changeset(valid, %{name: "new name"})
   #         |> assert_unchanged([:name])
   #       end)
-  #   end
+  end
 
   #   @tag :skip
   #   test "will object to an impossible field", %{valid: valid} do

@@ -14,4 +14,10 @@ defmodule FlowAssertions.Ecto.Messages do
 
   def changeset_invalid, do: "The changeset is invalid"
   def changeset_valid, do: "The changeset is supposed to be invalid"
+
+  def some_field_changes(changeset) do 
+    changed_fields = Map.keys(changeset.changes)
+    "No fields were supposed to change, but these did: #{inspect changed_fields}"
+  end
+  
 end

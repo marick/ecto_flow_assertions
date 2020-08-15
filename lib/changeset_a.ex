@@ -58,14 +58,15 @@ defmodule FlowAssertions.Ecto.ChangesetA do
   def assert_change(cs, field_description),
     do: assert_changes(cs, field_description)
 
-  # @doc """
-  # The changeset must contain no changes.
-  # """
+  @doc """
+  The changeset must contain no changes.
+  """
   
-  # defchain assert_no_changes(%Changeset{} = changeset) do
-  #   changes = changeset.changes
-  #   assert changes == %{}, "Fields have changed: `#{Map.keys(changes) |> inspect}`"
-  # end
+  defchain assert_no_changes(%Changeset{} = changeset) do
+    changes = changeset.changes
+    elaborate_assert(changes == %{}, Messages.some_field_changes(changeset),
+      left: changeset)
+  end
 
   # @doc """
   # Require that particular fields have no changes. Unmentioned fields may
