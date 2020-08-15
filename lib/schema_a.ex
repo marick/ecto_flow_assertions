@@ -76,8 +76,34 @@ defmodule FlowAssertions.Ecto.SchemaA do
     elaborate_flunk(Messages.never_a_schema, left: value)
   end
 
-  # defchain assert_schema_copy(new, original, [ignoring: extras]) do
-  #   ignoring = extras ++ [:inserted_at, :updated_at, :__meta__]
-  #   assert_same_map(new, original, ignoring: ignoring)
-  # end
+  @doc """
+  Map comparison that auto-ignores fields typically irrelevant when working with schemas. 
+
+  Works just like `FlowAssertions.MapA.assert_same_map/3`, except that
+  it ignores the `:updated_at`, `:created_at`, and `:__meta__` fields
+  (if present).
+  
+      old
+      |> VM.Animal.change(name: "bossie")
+      |> assert_same_schema(old, except: [name: "bossie"]
+
+  You can compare one or more of those three fields by using the `comparing:` or
+  `except:` options:
+
+      assert_same_schema(new, old, except: newer_than(old)
+
+  """
+  defchain assert_same_schema(new, old, opts \\ []) do
+    default_ignore = those_in(new, [:inserted_at, :updated_at, :__meta__])
+    ignore = Keyword.get(opts, :ignoring, []) ++ default_ignore
+    except = Keyword.get(opts, :except, [])
+
+    if Keyword.has_key?(opts, :comparing) do
+      assert_same_map(new, old, opts)
+    else
+      assert_same_map(new, old, ignoring: ignore, except: except)
+    end
+  end
+
+  defp those_in(struct, keys), do: Enum.filter(keys, &(Map.has_key?(struct, &1)))
 end
