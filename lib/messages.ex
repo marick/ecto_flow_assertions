@@ -19,5 +19,11 @@ defmodule FlowAssertions.Ecto.Messages do
     changed_fields = Map.keys(changeset.changes)
     "No fields were supposed to change, but these did: #{inspect changed_fields}"
   end
-  
+
+  def bad_field_change(field),
+    do: "Field `#{inspect field}` should not have changed, but it did"
+    
+  def no_error_for_field(field), do: "There are no errors for field `#{inspect field}`"
+  def not_right_error_message(field),
+    do: "Field #{inspect field} does not have the expected error message."
 end

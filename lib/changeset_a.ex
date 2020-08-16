@@ -68,93 +68,93 @@ defmodule FlowAssertions.Ecto.ChangesetA do
       left: changeset)
   end
 
-  # @doc """
-  # Require that particular fields have no changes. Unmentioned fields may
-  # have changes. When there's only a single field, it needn't be enclosed in
-  # a list.
-
-  #     assert_unchanged(changeset, :name)
-  #     assert_unchanged(changeset, [:name, :tags])
-  # """
-  # defchain assert_unchanged(%Changeset{} = changeset, field) when is_atom(field) do
-  #   struct_must_have_key!(changeset.data, field)
-  #   refute Map.has_key?(changeset.changes, field),
-  #     "Field `#{inspect field}` has changed"
-  # end
-
-  # defchain assert_unchanged(%Changeset{} = changeset, fields) when is_list(fields),
-  #   do: Enum.map fields, &(assert_unchanged changeset, &1)
-
-
-  # # ------------------------------------------------------------------------
-  # @doc """
-  # Assert that a changeset contains specific errors. In the simplest case,
-  # it requires that the fields have at least one error, but doesn't require
-  # any specific message:
-
-  #     assert_errors(changeset, [:name, :tags])
   
-  # A message may also be required:
+  @doc """
+  Require a changeset to have no changes in particular fields. Unmentioned fields may
+  have changes. When there's only a single field, it needn't be enclosed in
+  [brackets].
 
-  #     assert_errors(changeset,
-  #       name: "may not be blank",
-  #       tags: "is invalid")
+      assert_no_changes(changeset, :name)
+      assert_no_changes(changeset, [:name, :tags])
+  """
+  defchain assert_no_changes(%Changeset{} = changeset, field) when is_atom(field) do
+    struct_must_have_key!(changeset.data, field)
+    elaborate_refute(Map.has_key?(changeset.changes, field),
+      Messages.bad_field_change(field),
+      left: changeset)
+  end
 
-  # The given string must be an exact match for one of the field's errors.
-  # (It is not a failure for others to be unmentioned.)
+  defchain assert_no_changes(%Changeset{} = changeset, field_or_fields)
+  when is_list(field_or_fields),
+    do: Enum.map field_or_fields, &(assert_no_changes changeset, &1)
 
-  # If you want to list more than one message, enclose them in a list:
 
-  #     assert_errors(changeset,
-  #       name: "may not be blank",
-  #       tags: ["is invalid",
-  #              "has something else wrong"])
+  # ------------------------------------------------------------------------
+  @doc ~S"""
+  Assert that a changeset contains specific errors. In the simplest case,
+  it requires that the fields have at least one error, but doesn't require
+  any specific message:
 
-  # The list need not be a complete list of errors.
-  # """
-  # defchain assert_errors(%Changeset{} = changeset, list) do
-  #   errors = errors_on(changeset)
+      assert_errors(changeset, [:name, :tags])
+  
+  A message may also be required:
 
-  #   any_error_check = fn field ->
-  #     assert Map.has_key?(errors, field),
-  #       "There are no errors for field `#{inspect field}`"
-  #   end
+      assert_errors(changeset,
+        name: "may not be blank",
+        tags: "is invalid")
 
-  #   message_check = fn field, expected ->
-  #     any_error_check.(field)
+  The given string must be an exact match for one of the field's errors.
+  (It is not a failure for others to be unmentioned.)
 
-  #     msg = """
-  #     `#{inspect field}` is missing an error message.
-  #     expected: #{inspect expected}
-  #     actual:   #{inspect errors[field]}
-  #     """
-      
-  #     assert expected in errors[field], msg
-  #   end
+  If you want to list more than one message, enclose them in a list:
+
+      assert_errors(changeset,
+        name: "may not be blank",
+        tags: ["is invalid",
+               "has something else wrong"])
+
+  The list need not be a complete list of errors.
+  """
+  defchain assert_errors(%Changeset{} = changeset, list) do
+    errors = phoenix_errors_on(changeset)
+
+    any_error_check = fn field ->
+      elaborate_assert(Map.has_key?(errors, field),
+        Messages.no_error_for_field(field),
+        left: changeset)
+    end
+
+    message_check = fn field, expected ->
+      any_error_check.(field)
+      elaborate_assert(expected in errors[field],
+        Messages.not_right_error_message(field),
+        left: errors[field],
+        right: expected)
+    end
     
-  #   Enum.map(list, fn
-  #     field when is_atom(field) ->
-  #       assert any_error_check.(field)
-  #     {field, expected} when is_binary(expected) ->
-  #       message_check.(field, expected)
-  #     {field, expecteds} when is_list(expecteds) ->
-  #       Enum.map expecteds, &(message_check.(field, &1))
-  #   end)
-  # end
+    Enum.map(list, fn
+      field when is_atom(field) ->
+        assert any_error_check.(field)
+      {field, expected} when is_binary(expected) ->
+        message_check.(field, expected)
+      {field, expecteds} when is_list(expecteds) ->
+        Enum.map expecteds, &(message_check.(field, &1))
+    end)
+  end
 
-  # @doc """
-  # Like `assert_error` but reads better when there's only a single error
-  # to be checked:
+  @doc """
+  Like `assert_errors` but reads better when there's only a single error
+  to be checked:
 
-  #     assert_error(changeset, name: "is invalid")
+      assert_error(changeset, name: "is invalid")
 
-  # If the message isn't to be checked, you can use a single atom:
+  If the message isn't to be checked, you can use a single atom:
 
-  #     assert_error(changeset, :name)
-  # """
+      assert_error(changeset, :name)
+  """
   
-  # defchain assert_error(cs, arg2) when is_atom(arg2), do: assert_errors(cs, [arg2])
-  # defchain assert_error(cs, arg2),                    do: assert_errors(cs,  arg2)
+  defchain assert_error(cs, arg2) when is_atom(arg2), do: assert_errors(cs, [arg2])
+  defchain assert_error(cs, arg2),                    do: assert_errors(cs,  arg2)
 
   # @doc """
   # Require that none of the named fields have an associated error:
@@ -224,4 +224,16 @@ defmodule FlowAssertions.Ecto.ChangesetA do
   #   apply(ChangesetX, fetch_how, [changeset, field])
   #   |> singleton_content
   # end
+
+  # ----------------------------------------------------------------------------
+
+  # Taken from Phoenix's `test/support/data_case.ex`.
+  defp phoenix_errors_on(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
+      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
+        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+      end)
+    end)
+  end
+
 end
