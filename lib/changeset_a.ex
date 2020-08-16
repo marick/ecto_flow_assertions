@@ -113,31 +113,39 @@ defmodule FlowAssertions.Ecto.ChangesetA do
   The list need not be a complete list of errors.
   """
   defchain assert_errors(%Changeset{} = changeset, error_descriptions) do
-    errors = phoenix_errors_on(changeset)
+    errors_map = phoenix_errors_on(changeset)
 
     assert_field_has_an_error = fn field ->
-      elaborate_assert(Map.has_key?(errors, field),
+      elaborate_assert(Map.has_key?(errors_map, field),
         Messages.no_error_for_field(field),
         left: changeset)
     end
 
+    has_message_match? = fn expected, field_error_list ->
+      expected in field_error_list
+    end
+
     assert_message_match = fn field, expected ->
-      elaborate_assert(expected in errors[field],
+      field_error_list = errors_map[field]
+      
+      elaborate_assert(has_message_match?.(expected, field_error_list),
         Messages.not_right_error_message(field),
-        left: errors[field],
+        left: field_error_list,
         right: expected)
     end
 
     Enum.map(error_descriptions, fn
-      field when is_atom(field) ->
+      field                when is_atom(field)     ->
         assert_field_has_an_error.(field)
-      {field, expected} when is_binary(expected) ->
-        assert_field_has_an_error.(field)
-        assert_message_match.(field, expected)
-      {field, expecteds} when is_list(expecteds) ->
+      
+      {field, expecteds}   when is_list(expecteds) ->
         assert_field_has_an_error.(field)
         for expected <- expecteds,
           do: assert_message_match.(field, expected)
+
+      {field, expected}                            ->
+        assert_field_has_an_error.(field)
+        assert_message_match.(field, expected)
     end)
   end
 
