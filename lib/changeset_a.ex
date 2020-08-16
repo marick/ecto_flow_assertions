@@ -194,27 +194,23 @@ defmodule FlowAssertions.Ecto.ChangesetA do
 
   # # ------------------------------------------------------------------------
 
-  # defchain assert_data(changeset, keylist) when is_list(keylist) do
-  #   assert_fields(changeset.data, keylist)
-  # end
-  
-  # defchain assert_data(changeset, expected) do
-  #   assert changeset.data == expected
-  # end
+  defchain assert_data(changeset, expected) do
+    assert_fields(changeset.data, expected)
+  end
 
-  # @doc """
-  # Assert that a field in the data part of the changeset matches a binding form
+  @doc """
+  Assert that a field in the data part of the changeset matches a binding form
 
-  #     assert_data_shape(changeset, :field, %User{})
-  #     assert_data_shape(changeset, :field, [_ | _])
-  # """
-  # defmacro assert_data_shape(changeset, key, shape) do
-  #   quote do
-  #     eval_once = unquote(changeset)
-  #     assert_field_shape(eval_once.data, unquote(key), unquote(shape))
-  #     eval_once
-  #   end
-  # end
+      changeset |> assert_data_shape(:field, %User{})
+      changeset |> assert_data_shape(:field, [_ | _])
+  """
+  defmacro assert_data_shape(changeset, key, shape) do
+    quote do
+      eval_once = unquote(changeset)
+      assert_field_shape(eval_once.data, unquote(key), unquote(shape))
+      eval_once
+    end
+  end
 
   # # ----------------------------------------------------------------------------
 

@@ -246,36 +246,38 @@ defmodule FlowAssertions.Ecto.ChangesetATest do
     end
   end
 
-  # describe "testing the data part" do
-  #   test "equality comparison", %{valid: valid} do
-  #     changeset(valid, %{})
-  #     |> assert_data(name: valid.name)
-  #     |> assert_data(tags: valid.tags)
-  #     |> assert_data(name: valid.name, tags: valid.tags)
-  #   end
+  describe "testing the data part" do
+    test "field equality comparison", %{valid: valid} do
+      changeset(valid, %{})
+      |> assert_data(name: valid.name)
+      |> assert_data(tags: valid.tags)
+      |> assert_data(name: valid.name, tags: valid.tags)
 
-  #   @tag :skip
-  #   test "shape comparison" do
-  #     assert %PermissionList{}.view_reservations == true # default
+      assertion_fails(BaseMessages.wrong_field_value(:name),
+        [left: valid.name,
+         right: ""],
+        fn -> 
+          changeset(valid, %{name: ""})
+          |> assert_data(name: "")
+        end)
+    end
 
-  #     (fresh = UserApi.fresh_user_changeset)
-  #     |> assert_data_shape(:permission_list, %{})
-  #     |> assert_data_shape(:permission_list, %PermissionList{})
-  #     |> assert_data_shape(:permission_list,
-  #                          %PermissionList{view_reservations: true})
+    test "shape comparison", %{valid: valid} do
 
-  #     assertion_fails(
-  #       ["The value doesn't match the given pattern"],
-  #       fn -> 
-  #         assert_data_shape(fresh, :permission_list, %User{})
-  #       end)
+      [tag] = valid.tags
+
+      changeset = changeset(valid, %{})
       
-  #     assertion_fails(
-  #       ["The value doesn't match the given pattern"],
-  #       fn -> 
-  #         assert_data_shape(fresh, :permission_list,
-  #           %PermissionList{view_reservations: false})
-  #       end)
-  #   end
-  # end
+      changeset
+      |> assert_data_shape(:tags, [_])
+      |> assert_data_shape(:tags, ["cow"])
+      |> assert_data_shape(:tags, [^tag | _])
+
+      assertion_fails(BaseMessages.no_field_match(:tags),
+        [left: ["cow"]],
+        fn -> 
+          assert_data_shape(changeset, :tags, [])
+        end)
+    end
+  end
 end
