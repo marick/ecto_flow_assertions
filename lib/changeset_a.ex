@@ -71,11 +71,10 @@ defmodule FlowAssertions.Ecto.ChangesetA do
   
   @doc """
   Require a changeset to have no changes in particular fields. Unmentioned fields may
-  have changes. When there's only a single field, it needn't be enclosed in
-  [brackets].
+  have changes. When there's only a single field, it needn't be enclosed in a list.
 
-      assert_no_changes(changeset, :name)
-      assert_no_changes(changeset, [:name, :tags])
+      changeset |> assert_no_changes([:name, :tags])
+      changeset |> assert_no_changes(:name)
   """
   defchain assert_no_changes(%Changeset{} = changeset, field) when is_atom(field) do
     struct_must_have_key!(changeset.data, field)
@@ -92,30 +91,28 @@ defmodule FlowAssertions.Ecto.ChangesetA do
   # ------------------------------------------------------------------------
   @doc ~S"""
   Assert that a changeset contains specific errors. In the simplest case,
-  it requires that the fields have at least one error, but doesn't require
+  it requires that each named field have at least one error, but doesn't require
   any specific message:
 
-      assert_errors(changeset, [:name, :tags])
+      changeset |> assert_errors([:name, :tags])
   
   A message may also be required:
 
-      assert_errors(changeset,
-        name: "may not be blank",
-        tags: "is invalid")
+      changeset
+      |> assert_errors(name: "may not be blank", tags: "is invalid")
 
-  The given string must be an exact match for one of the field's errors.
-  (It is not a failure for others to be unmentioned.)
+  The given string must be an exact match for one of the field's error messages.
 
-  If you want to list more than one message, enclose them in a list:
+  If you want to check more than one error message for a given field,
+  enclose them in a list:
 
-      assert_errors(changeset,
-        name: "may not be blank",
-        tags: ["is invalid",
-               "has something else wrong"])
+      changeset
+      |> assert_errors(name: "may not be blank",
+                       tags: ["is invalid", "has something else wrong"])
 
   The list need not be a complete list of errors.
   """
-  defchain assert_errors(%Changeset{} = changeset, list) do
+  defchain assert_errors(%Changeset{} = changeset, error_descriptions) do
     errors = phoenix_errors_on(changeset)
 
     any_error_check = fn field ->
@@ -132,7 +129,7 @@ defmodule FlowAssertions.Ecto.ChangesetA do
         right: expected)
     end
     
-    Enum.map(list, fn
+    Enum.map(error_descriptions, fn
       field when is_atom(field) ->
         assert any_error_check.(field)
       {field, expected} when is_binary(expected) ->
@@ -153,8 +150,10 @@ defmodule FlowAssertions.Ecto.ChangesetA do
       assert_error(changeset, :name)
   """
   
-  defchain assert_error(cs, arg2) when is_atom(arg2), do: assert_errors(cs, [arg2])
-  defchain assert_error(cs, arg2),                    do: assert_errors(cs,  arg2)
+  defchain assert_error(cs, error_description) when is_atom(error_description),
+    do: assert_errors(cs, [error_description])
+  defchain assert_error(cs, error_description),
+    do: assert_errors(cs,  error_description)
 
   # @doc """
   # Require that none of the named fields have an associated error:
