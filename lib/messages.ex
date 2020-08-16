@@ -25,5 +25,7 @@ defmodule FlowAssertions.Ecto.Messages do
     
   def no_error_for_field(field), do: "There are no errors for field `#{inspect field}`"
   def not_right_error_message(field),
-    do: "Field #{inspect field} does not have the expected error message."
+    do: "Field #{inspect field} does not have a matching error message."
+
+  def unexpected_error(field), do: "Field #{inspect field} unexpectedly has an error"
 end

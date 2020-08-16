@@ -196,36 +196,55 @@ defmodule FlowAssertions.Ecto.ChangesetATest do
           assert_error(changeset, tags: ["is invalid", "not present"])
         end)
     end
+
+    test "string matches must match completely...", %{valid: valid} do
+      changeset = 
+        changeset(valid, %{})
+        |> add_error(:tags, "this is an error message")
+
+      changeset
+      |> assert_error(tags: "this is an error message")
+
+      assertion_fails(Messages.not_right_error_message(:tags),
+        [left: ["this is an error message"],
+         right: "this"],
+        fn ->
+          assert_error(changeset, tags: "this")
+        end)
+
+      # ... but you can use a regular expression
+      
+      assert_error(changeset, tags: ~r/this/)
+    end
+
   end
 
-  # describe "asserting there is no error" do
-  #   test "success case", %{valid: valid} do
-  #     changeset(valid, %{})
-  #     |> assert_valid
-  #     |> assert_error_free([:tags, :name])
-  #     |> assert_error_free( :tags)
-  #   end
+  describe "asserting there is no error" do
+    test "success case", %{valid: valid} do
+      changeset(valid, %{})
+      |> assert_valid
+      |> assert_error_free([:tags, :name])
+      |> assert_error_free( :tags)
+    end
 
-  #   test "field does have an error", %{valid: valid} do
-  #     assertion_fails(
-  #       ["There is an error for field `:tags`"],
-  #       fn -> 
-  #         changeset(valid, %{tags: "bogus"})
-  #         |> assert_invalid
-  #         |> assert_error_free(:tags)
-  #       end)
-  #   end
+    test "field does have an error", %{valid: valid} do
+      changeset = changeset(valid, %{tags: "bogus"})
+      
+      assertion_fails(Messages.unexpected_error(:tags),
+        [left: changeset],
+        fn -> 
+          assert_error_free(changeset, :tags)
+        end)
+    end
 
-  #   @tag :skip
-  #   test "will object to an impossible field", %{valid: valid} do
-  #     assertion_fails(
-  #       ["Test error: there is no key `:gorp` in Crit.Assertions.ChangesetTest"],
-  #       fn -> 
-  #         changeset(valid, %{tags: "bogus"})
-  #         |> assert_error_free(:gorp)
-  #       end)
-  #   end
-  # end
+    test "will object to an impossible field", %{valid: valid} do
+      assertion_fails(BaseMessages.required_key_missing(:gorp, %__MODULE__{}),
+        fn -> 
+          changeset(valid, %{tags: "bogus"})
+          |> assert_error_free(:gorp)
+        end)
+    end
+  end
 
   # describe "testing the data part" do
   #   test "equality comparison", %{valid: valid} do

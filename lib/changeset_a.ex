@@ -122,7 +122,9 @@ defmodule FlowAssertions.Ecto.ChangesetA do
     end
 
     has_message_match? = fn expected, field_error_list ->
-      expected in field_error_list
+      Enum.any?(field_error_list, fn error_message ->
+        good_enough?(error_message, expected)
+      end)
     end
 
     assert_message_match = fn field, expected ->
@@ -165,29 +167,30 @@ defmodule FlowAssertions.Ecto.ChangesetA do
   defchain assert_error(cs, error_description),
     do: assert_errors(cs,  error_description)
 
-  # @doc """
-  # Require that none of the named fields have an associated error:
+  @doc """
+  Assert that a field or fields have no associated errors.
 
-  #     assert_error_free(changes, [:in_service_datestring, :name])
+      changeset |> assert_error_free([:in_service_datestring, :name])
   
-  # There can also be a singleton field:
+  You needn't use a list if there's only one field to check. 
 
-  #     assert_error_free(changes, :in_service_datestring)
-  # """
+      changeset |> assert_error_free(:in_service_datestring)
+  """
 
-  # defchain assert_error_free(changeset, field) when is_atom(field),
-  #   do: assert_error_free(changeset, [field])
-  # defchain assert_error_free(changeset, fields) do
-  #   errors = errors_on(changeset)
+  defchain assert_error_free(changeset, field) when is_atom(field),
+    do: assert_error_free(changeset, [field])
+  defchain assert_error_free(changeset, fields) do
+    errors = phoenix_errors_on(changeset)
 
-  #   check = fn(field) ->
-  #     struct_must_have_key!(changeset.data, field)
-  #     refute Map.has_key?(errors, field),
-  #       "There is an error for field `#{inspect field}`"
-  #   end
+    check = fn(field) ->
+      struct_must_have_key!(changeset.data, field)
+      elaborate_refute(Map.has_key?(errors, field),
+        Messages.unexpected_error(field),
+        left: changeset)
+    end
       
-  #   Enum.map(fields, check)
-  # end
+    Enum.map(fields, check)
+  end
 
   # # ------------------------------------------------------------------------
 
