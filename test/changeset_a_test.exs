@@ -83,31 +83,28 @@ defmodule FlowAssertions.Ecto.ChangesetATest do
         end)
     end
 
-  #   test "assert particular values are unchanged", %{valid: valid} do
-  #     changeset(valid, %{name: "new name"})
-  #     |> assert_valid
-  #     |> assert_unchanged([:tags])
-  #     |> assert_unchanged(:tags)
+    test "assert particular values are unchanged", %{valid: valid} do
+      changeset(valid, %{name: "new name"})
+      |> assert_valid
+      |> assert_no_changes([:tags])
+      |> assert_no_changes(:tags)
 
-  #     assertion_fails_with_diagnostic(
-  #       "Field `:name` has changed",
-  #       fn -> 
-  #         changeset(valid, %{name: "new name"})
-  #         |> assert_unchanged([:name])
-  #       end)
+      bad_changeset = changeset(valid, %{name: "new name"})
+      assertion_fails(Messages.bad_field_change(:name),
+        [left: bad_changeset],
+        fn -> 
+          assert_no_changes(bad_changeset, [:name])
+        end)
+    end
+
+    test "will object to an impossible field", %{valid: valid} do
+      assertion_fails(BaseMessages.required_key_missing(:gorp, %__MODULE__{}),
+        fn -> 
+          changeset(valid, %{})
+          |> assert_no_changes([:gorp, :foop])
+        end)
+    end
   end
-
-  #   @tag :skip
-  #   test "will object to an impossible field", %{valid: valid} do
-  #     assertion_fails_with_diagnostic(
-  #       ["Test error: there is no key `:gorp` in Crit.Assertions.ChangesetTest"],
-  #       fn -> 
-  #         changeset(valid, %{})
-  #         |> assert_unchanged([:gorp, :foop])
-  #       end)
-  #   end
-    
-  # end
   
   # describe "the existence of errors" do
   #   test "yes, the error is there", %{valid: valid} do
