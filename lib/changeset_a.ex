@@ -3,6 +3,7 @@ defmodule FlowAssertions.Ecto.ChangesetA do
   alias FlowAssertions.Ecto.Messages
   use FlowAssertions
   alias Ecto.Changeset
+  alias FlowAssertions.MapA
   
 
   @moduledoc """
@@ -199,7 +200,7 @@ defmodule FlowAssertions.Ecto.ChangesetA do
   end
 
   @doc """
-  Assert that a field in the data part of the changeset matches a binding form
+  Assert that a field in the data part of a changeset matches a binding form.
 
       changeset |> assert_data_shape(:field, %User{})
       changeset |> assert_data_shape(:field, [_ | _])
@@ -212,26 +213,46 @@ defmodule FlowAssertions.Ecto.ChangesetA do
     end
   end
 
-  # # ----------------------------------------------------------------------------
-
-  # @doc """
-
-  # Assert that the changeset will cause `error_tag` and friends to show
-  # errors. This happens automatically when the changeset comes from an
-  # Ecto function, but that doesn't happen with view models.
-  # """
-  # defchain assert_form_will_display_errors(changeset),
-  #   do: assert changeset.action != nil
-
-  # defchain refute_form_will_display_errors(changeset),
-  #   do: assert changeset.action == nil
+  # ----------------------------------------------------------------------------
 
 
+  @doc """
+  Operate on the single element of a list in a changeset field.
 
-  # def with_singleton(%Changeset{} = changeset, fetch_how, field) do
-  #   apply(ChangesetX, fetch_how, [changeset, field])
-  #   |> singleton_content
-  # end
+  This is typically used with fields that take list values. Often,
+  you only want to test the empty list and a singleton list.
+  (When testing functions that produce their values with `Enum.map/2` or `for`,
+  creating a second list element gains you nothing.)
+  Using `with_singleton_content`, it's
+  convenient to apply assertions to the single element:
+
+      changeset
+      |> assert_valid
+      |> with_singleton_content(:changes, :service_gaps)
+         |> assert_shape(%VM.ServiceGap{})
+         |> Ex.Datespan.assert_datestrings(:first)
+
+  The second value can be `:data`, `:changes`, or `:newest`. The first use
+  their respective fields in the changeset. The last uses `Ecto.Changeset.fetch_field!/2`, meaning:
+
+  1. If the field is present in `Changeset.changes`, that value is used.
+  2. Otherwise, the value in `Changeset.data` is used.
+  
+  If `field` does not exist or isn't an `Enum`, `with_singleton_content` will fail in
+  the same way `FlowAssertions.EnumA.singleton_content/1` does.
+  """
+  def with_singleton_content(%Changeset{} = changeset, :newest, field) do
+    which_key =
+      if Map.has_key?(changeset.changes, field), do: :changes, else: :data
+    with_singleton_content(changeset, which_key, field)
+  end
+
+  def with_singleton_content(%Changeset{} = changeset, version, field) do
+    changeset
+    |> Map.get(version)
+    |> MapA.with_singleton_content(field)
+  end
+    
 
   # ----------------------------------------------------------------------------
 

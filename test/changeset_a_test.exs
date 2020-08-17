@@ -263,9 +263,7 @@ defmodule FlowAssertions.Ecto.ChangesetATest do
     end
 
     test "shape comparison", %{valid: valid} do
-
       [tag] = valid.tags
-
       changeset = changeset(valid, %{})
       
       changeset
@@ -278,6 +276,51 @@ defmodule FlowAssertions.Ecto.ChangesetATest do
         fn -> 
           assert_data_shape(changeset, :tags, [])
         end)
+    end
+  end
+
+  describe "with_singleton_content" do
+    test "successful fetches" do
+      expected_1_element = BaseMessages.expected_1_element_field(:tags)
+
+      make_changeset = fn changes ->
+        %__MODULE__{tags: ["original"]} |> changeset(changes)
+      end
+
+      r = fn [changeset, from_where], expected ->
+        one_check(fn -> 
+          with_singleton_content(changeset, from_where, :tags)
+        end, expected)
+      end
+
+      unchanged = make_changeset.(%{})
+      r.( [unchanged, :newest],   "original")
+      r.( [unchanged, :changes],   _error(expected_1_element, left: nil))
+      r.( [unchanged, :data],     "original")
+      
+      changed = make_changeset.(%{tags: ["CHANGE"]})
+      r.( [changed,   :newest],   "CHANGE")
+      r.( [changed,   :changes],  "CHANGE")
+      r.( [changed,   :data],     "original")
+    end
+    
+    def _error(message, field_values) do
+      {:__error__, message, field_values}
+    end
+
+    def one_check f, :_view do
+      IO.inspect f.()
+    end
+
+    def one_check f, {:__error__, message, field_values} do
+      assertion_fails(message, field_values,
+        fn -> 
+          f.()
+        end)
+    end
+
+    def one_check f, expected do
+      assert f.() == expected
     end
   end
 end
