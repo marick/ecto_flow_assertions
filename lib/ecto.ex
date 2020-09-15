@@ -2,8 +2,7 @@ defmodule FlowAssertions.Ecto do
 
 @moduledoc """
 
-This is a library of assertions for code that uses Ecto. It concentrates on
-flow-style tests for changesets. 
+This is a library of assertions for code that works with Ecto schemas or changesets. It is built on top of `FlowAssertions`. 
 
 1. Making tests easier to scan by capturing frequently-used assertions in
    functions that can be used in a pipeline.
@@ -92,7 +91,19 @@ In the output, `left` will refer to some value extracted from
 
 ## Related code
 
-*TBD*
+* `FlowAssertions` is the base upon which `FlowAssertions.Ecto` is built.
+
+* Although it was designed for integration testing, `PhoenixIntegration` also uses
+  flow-style macros. 
+
+      test "details about form structure", %{conn: conn} do
+        get_via_action(conn, :bulk_create_form)
+        |> form_inputs(:bulk_animal)
+        |> assert_fields(in_service_datestring: @today,
+                         out_of_service_datestring: @never,
+                         species_id: to_string(@bovine_id),
+                         names: ~r/^\W*$/
+      end
 
 """
 

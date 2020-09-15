@@ -8,7 +8,8 @@ defmodule EctoFlowAssertions.MixProject do
   def project do
     [
       description: """
-      Flow-style assertions for code that uses Ecto.
+      Common Ecto schema and changeset assertions, written to be
+      easily used in pipelines.
       """,
       app: :ecto_flow_assertions,
       version: @version,
@@ -20,11 +21,24 @@ defmodule EctoFlowAssertions.MixProject do
       name: "Ecto Flow Assertions",
       source_url: @github,
       docs: [
+        main: "FlowAssertions.Ecto",
         extras: ["README.md"],
       ],
-      
+
+      package: [
+        contributors: ["marick@exampler.com"],
+        maintainers: ["marick@exampler.com"],
+        licenses: ["Unlicense"],
+        links: %{
+          "GitHub" => @github
+        },
+      ],
     ]
   end
+
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   # Run "mix help compile.app" to learn about applications.
   def application do
@@ -33,17 +47,14 @@ defmodule EctoFlowAssertions.MixProject do
     ]
   end
 
-  # Specifies which paths to compile per environment.
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_), do: ["lib"]
-
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:ecto, "~> 3.0"},
-      {:flow_assertions, "~> 0.2",
+      {:flow_assertions, "~> 0.3",
        # git: "https://github.com/marick/flow_assertions.git",
-       path: "/Users/bem/src/flow_assertions"},
+       # path: "/Users/bem/src/flow_assertions"
+      },
       {:ex_doc, "~> 0.22", only: :dev, runtime: false},
       
       # {:dep_from_hexpm, "~> 0.3.0"},

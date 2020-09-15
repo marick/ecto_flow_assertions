@@ -1,6 +1,5 @@
 # EctoFlowAssertions
 
-**TODO: Add description**
 
 ## Installation
 
