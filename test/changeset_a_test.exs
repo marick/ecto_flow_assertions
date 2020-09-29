@@ -19,6 +19,9 @@ defmodule FlowAssertions.Ecto.ChangesetATest do
     [valid: %__MODULE__{name: "Bossie", tags: ["cow"]}]
   end
 
+  @tag :skip
+  test "changeset detects an `assert_change` that doesn't fit the underlying data."
+
   test "pure booleans" do
     invalid = %__MODULE__{} |> changeset(%{})
     valid = %__MODULE__{} |> changeset(%{name: "Bossie"})
