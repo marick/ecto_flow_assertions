@@ -23,6 +23,7 @@ defmodule EctoFlowAssertions.MixProject do
       docs: [
         main: "FlowAssertions.Ecto",
         extras: ["README.md"],
+        nest_modules_by_prefix: [FlowAssertions.Ecto],
       ],
 
       package: [
